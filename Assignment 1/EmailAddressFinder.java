@@ -1,0 +1,235 @@
+package com.bham.pij.assignments.assignment1; // Tan Xiao Wei, Student ID: 1986487
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+
+public class EmailAddressFinder {
+    
+	private static ArrayList<String> emailAddresses;
+    
+    	public static void main(String[] args) {
+        emailAddresses = new ArrayList<String>();
+        EmailAddressFinder eaf = new EmailAddressFinder();
+        eaf.run();
+        System.out.println("Email addresses found: " + emailAddresses.size());
+    }
+    
+	public void run() {
+        
+        BufferedReader reader = null;
+        
+        try {
+            reader = new BufferedReader(new FileReader("corrupteddb"));
+     
+            String input = "";
+           
+            PrintWriter pw = new PrintWriter("eaf");
+            
+            while ((input = reader.readLine()) != null) {
+                
+                input = input.trim();
+                
+                ArrayList<String> temp = new ArrayList<String>();
+                
+                temp = findEmailAddresses(input);             
+                
+                for (String t: temp) {
+                    emailAddresses.add(t);
+                }                
+            }
+            
+            pw.close();
+            reader.close();
+        }
+        
+        catch(IOException e) {
+            e.printStackTrace();
+        }        
+    }
+    
+		public ArrayList<String> findEmailAddresses(String input) {
+        
+    		ArrayList<String> list = new ArrayList<String>();
+
+			//list.add("bob@gmail.com")
+
+			String TLD[] = new String[] {".net",".com",".uk",".de",".jp",".ro"};
+
+				while (input.indexOf('@') != -1) { // while an '@ ' is found 
+
+					int domainFirstPart = Integer.MAX_VALUE; // makes sure the function isn't stuck in a loop
+
+					int domainLastPart = Integer.MAX_VALUE; // by stopping the function when there are no more domains	
+	
+						for (int i = 0; i < TLD.length; i++) {
+
+							String s = TLD[i];
+
+							int foundTLD = input.indexOf(s); // checks if input has any TLD's
+
+							int topLevelDomain = foundTLD + s.length(); // takes everything after the TLD
+
+								if (foundTLD != -1 && foundTLD < domainFirstPart) { // if a TLD is found and the TLD closest to the '@' is taken
+
+									domainFirstPart = foundTLD;
+
+									domainLastPart = topLevelDomain;
+
+								}
+
+						}
+
+								if (domainFirstPart == Integer.MAX_VALUE) {
+
+									break;
+
+								}
+
+									String email = input.substring(0, domainLastPart);
+
+									String valid = extract(email);
+
+										if (valid != null) {
+
+											list.add(valid);
+
+											System.out.println(valid);
+
+										}
+	
+					input = input.substring(domainLastPart); // takes a substring from the end of the TLD
+
+				}
+
+
+			return list;
+	
+		}
+
+			public static String extract(String line) {
+
+				String valid = null;
+
+				int index = -1; // starts the variable as invalid, with tests to validate afterwards
+
+				int domainPeriod = 0;
+
+					for (int i = line.length() - 1; i >= 0; i--) { // iterates through the string backwards
+
+						if (line.charAt(i) == '@') { // breaks out of the loop when an @ is found
+
+							index = i;
+
+							break;
+						}
+
+					}
+
+							if (index <= 0) {
+
+								return null;
+
+							}
+
+				String domain = line.substring(index, line.length());
+
+				int period = 0;
+
+					for (int i = 0; i < domain.length(); i++) {
+
+						if (domain.charAt(i) >= 'A' && domain.charAt(i) <= 'Z') { // checks for uppercase characters
+				
+							return null;
+						}
+
+						if (domain.charAt(i) == '.') {
+
+							period++;
+		
+						}
+
+						if (period > 2) { // checks for number of periods
+
+							return null;
+
+						}
+
+						if (domain.charAt(i) == '$') {
+
+							return null;
+		
+						}
+		
+					}
+
+
+				String local = line.substring(0, index);
+
+				int validStart = -1; // starts the variable as invalid, ''
+
+				int numPeriods = 0;
+
+					for (int i = local.length() - 1; i >= 0; i--) {
+
+						if ((line.charAt(i) >= 'a' && line.charAt(i) <= 'z') || (line.charAt(i) >= 'A' && line.charAt(i) <= 'Z') || (line.charAt(i) >= '0' && line.charAt(i) <= '9') || (line.charAt(i) == '.' && numPeriods == 0) || line.charAt(i) == '_') { // conditions for the local part
+
+						if (line.charAt(i) == '.') {
+
+							numPeriods++;
+	
+						}
+
+					validStart = i; /// checks if the conditions are satisfied, if not, breaks out of the loop
+
+					} 
+			
+						else {
+
+							break;
+
+						}
+
+					}
+
+							if (validStart < 0) {
+
+								valid = null;
+
+							}
+
+								else {
+
+									local = local.substring(validStart);
+
+									if (local.charAt(0) == '!' || local.charAt(0) == '`' || local.charAt(0) == '*' || local.charAt(0) == '"' || local.charAt(0) == ' ' || local.charAt(0) == '@' || local.charAt(0) == '#' || local.charAt(0) == '$' || local.charAt(0) == '%' || local.charAt(0) == '^' || local.charAt(0) == '&' || local.charAt(0) == '(' || local.charAt(0) == ')' || local.charAt(0) == '\'' || local.charAt(0) == '|' || local.charAt(0) == '\\' || local.charAt(0) == '{' || local.charAt(0) == '}' || local.charAt(0) == '[' || local.charAt(0) == ']' || local.charAt(0) == ',' || local.charAt(0) == '<' || local.charAt(0) == '>' || local.charAt(0) == '/' || local.charAt(0) == '?' || local.charAt(0) == '-' || local.charAt(0) == '=' || local.charAt(0) == '+' || local.charAt(0) == ';' || local.charAt(0) == ':' || local.charAt(0) == '~' || local.charAt(0) == '.') {
+
+										valid = local.substring(1) + domain; // if local has any weird symbols, substrings the first character after that
+
+								} 
+
+
+									else if (local.charAt(local.length() - 1) == '.') { // if period is before '@', returns invalid
+
+										valid = null;
+
+									}
+
+										else {
+	
+											valid = local + domain;
+										}
+
+								}
+
+				return valid;
+
+			}
+
+}
+
+			
+	
+
